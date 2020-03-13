@@ -17,15 +17,17 @@ from sklearn.model_selection import GridSearchCV
 
 scaler = StandardScaler()
 
-#Q_KEY = ""
+Q_KEY = "_uccF2ycfazsfESzVDzW"
 
-stock_ticker = 'STT'
+stock_ticker = 'STT' #ticker for analysis vs S&P 500
+end_date = "2020-03-05" #end date of stock prices
 
 tickers = ["^GSPC",
            stock_ticker]
 
 st.title("Fit model for ticker: {0:s}".format(stock_ticker))
 
+#helper function to apply yoy and qoq transformation to Quandl data
 def change_columns(data,col_list,sort_column):
     data = data.sort_values(sort_column)
     for col in col_list:
@@ -34,21 +36,26 @@ def change_columns(data,col_list,sort_column):
     data = data.sort_values(sort_column,ascending = False)
     return data
 
+#pull quandl data
 quandl.ApiConfig.api_key = Q_KEY
 data = quandl.get_table('SHARADAR/SF1', ticker=stock_ticker, paginate=True)
 
+#filter dataset down to quarterly and specific columns
 data = data[['ticker','dimension','price','dps','calendardate','datekey','reportperiod','payoutratio','bvps','epsdil','roe','roa','de','revenue','netinccmn','assets','equity']]
 data = data[data['dimension']=='ARQ']
 
+#annualize ratios
 data['roe'] = (data['netinccmn'] / data['equity']) *4
 data['roa'] = (data['netinccmn'] / data['assets']) *4
 data['turnover'] = (data['revenue'] / data['assets']) *4
 data['roa'] = (data['netinccmn'] / data['assets']) *4
 
+#apply qoq and yoy to specific columns
 list_change_cols = ['turnover','assets','payoutratio','bvps','epsdil','roe','roa','de','revenue','dps']
 data = change_columns(data,list_change_cols,'calendardate')
 
-multpl_stocks = web.get_data_yahoo(tickers,start = "2005-03-31",end = "2020-03-05")
+#get stock price data for stock and S&P 500
+multpl_stocks = web.get_data_yahoo(tickers,start = "2005-03-31",end = end_date)
 daily_returns = multpl_stocks['Adj Close'].pct_change().reset_index()
 
 daily_returns = daily_returns.fillna(0)
