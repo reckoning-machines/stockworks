@@ -75,25 +75,27 @@ df_rolling['rolling_beta'] = df_rolling['^GSPC']
 df_rolling = df_rolling.drop(columns = ['const','^GSPC'])
 
 #calc beta adjusted return and then alpha
-#we will use alpha as our target variable for modeling
+#we will use monthly alpha as our target variable for modeling
 daily_merged = pd.merge(df_rolling,daily_returns,how = 'inner',left_on='index',right_on = 'index')
 daily_merged['beta_return'] = daily_merged['^GSPC'] * daily_merged['rolling_beta']
 daily_merged['alpha'] = daily_merged['beta_return'] - daily_merged[stock_ticker]
 
 daily_merged = daily_merged.dropna()
-daily_merged['zscore'] = stats.zscore(daily_merged['alpha'])
+daily_merged['zscore'] = stats.zscore(daily_merged['alpha']) #i am normalizing alpha into a standard deviation spread
 daily_merged['Date'] = pd.to_datetime(daily_merged['Date'])
 daily_merged.set_index('Date', inplace=True)
 daily_merged = daily_merged.resample('M').mean()
-daily_merged['flag']  = daily_merged['zscore'].apply(lambda x: 1 if x > 0 else 0)
+daily_merged['flag']  = daily_merged['zscore'].apply(lambda x: 1 if x > 0 else 0) #set target variable "flag"
 
 data['reportperiod'] = pd.to_datetime(data['reportperiod'])
 data.set_index('reportperiod', inplace=True)
-data['quarter'] = data['calendardate'].dt.quarter
+data['quarter'] = data['calendardate'].dt.quarter #categorical variable for seasonality
+
+#resample everything to monthly ... forward fill .. love pandas
 data = data.resample('M').first()
 data = data.fillna(method='ffill')
 
-
+#merge it all together... stock data and quandl data
 a = daily_merged.reset_index()
 b = data.reset_index()
 b['Date'] = b['reportperiod']
