@@ -102,6 +102,7 @@ b['Date'] = b['reportperiod']
 fit_data = pd.merge(a,b)
 fit_data = fit_data.dropna()
 
+#LOGISTIC REGRESSION
 feature_cols = ['assets_qoq', 'assets_yoy','turnover_qoq', 'turnover_yoy', 'payoutratio_qoq',
        'payoutratio_yoy', 'bvps_qoq', 'bvps_yoy', 'epsdil_qoq', 'epsdil_yoy',
        'roe_qoq', 'roe_yoy', 'roa_qoq', 'roa_yoy', 'de_qoq', 'de_yoy',
@@ -115,7 +116,7 @@ scaled_features_df = pd.DataFrame(scaled_features, index=X.index, columns=X.colu
 X = scaled_features_df
 
 clf = LogisticRegression()
-clf.fit(X,y)
+clf.fit(X,y) #not bothering with train test split for this analysis... but will in future
 
 fit_score = clf.score(X,y)
 
@@ -137,7 +138,7 @@ st.write(alt.Chart(df_features).mark_bar().encode(
     y='score',
 ))
 
-def modelfit(alg, dtrain, predictors,useTrainCV=True, cv_folds=5, early_stopping_rounds=50):
+def model_fit(alg, dtrain, predictors,useTrainCV=True, cv_folds=5, early_stopping_rounds=50):
 
     if useTrainCV:
         xgb_param = alg.get_xgb_params()
@@ -168,10 +169,7 @@ def modelfit(alg, dtrain, predictors,useTrainCV=True, cv_folds=5, early_stopping
         y='score',
     ))
 
-#    print("\nModel Report")
-#    print("Accuracy : %.4g" % metrics.accuracy_score(dtrain['flag'].values, dtrain_predictions))
-
-#Choose all predictors except target & IDcols
+#Choose all predictors except target
 feature_cols = ['flag','assets_qoq', 'assets_yoy','turnover_qoq', 'turnover_yoy', 'payoutratio_qoq',
        'payoutratio_yoy', 'bvps_qoq', 'bvps_yoy', 'epsdil_qoq', 'epsdil_yoy',
        'roe_qoq', 'roe_yoy', 'roa_qoq', 'roa_yoy', 'de_qoq', 'de_yoy',
@@ -192,8 +190,7 @@ xgb1 = XGBClassifier(
  nthread=4,
  scale_pos_weight=1,
  seed=27)
-modelfit(xgb1, train, predictors)
-
+model_fit(xgb1, train, predictors)
 
 st.write("Data")
 feature_cols.append('flag')
