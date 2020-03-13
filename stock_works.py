@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV
 
 scaler = StandardScaler()
 
-Q_KEY = "_uccF2ycfazsfESzVDzW"
+#Q_KEY = ""
 
 stock_ticker = 'STT'
 
