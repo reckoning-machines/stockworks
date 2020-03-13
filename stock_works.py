@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV
 
 scaler = StandardScaler()
 
-Q_KEY = "_uccF2ycfazsfESzVDzW"
+Q_KEY = "_uccF2ycfazsfESzVDzW" #your quandl key here
 
 stock_ticker = 'STT' #ticker for analysis vs S&P 500
 end_date = "2020-03-05" #end date of stock prices
@@ -58,9 +58,13 @@ data = change_columns(data,list_change_cols,'calendardate')
 multpl_stocks = web.get_data_yahoo(tickers,start = "2005-03-31",end = end_date)
 daily_returns = multpl_stocks['Adj Close'].pct_change().reset_index()
 
+#some database cleanup
 daily_returns = daily_returns.fillna(0)
 daily_returns['index'] = daily_returns.index
 df = daily_returns[['^GSPC',stock_ticker]]
+
+#calculate rolling 60 day beta for use with alpha analysis
+#60 days is industry standard
 endog = daily_returns[stock_ticker]
 exog = sm.add_constant(daily_returns['^GSPC'])
 rols = RollingOLS(endog, exog, window=60)
@@ -70,6 +74,8 @@ df_rolling['index'] = df_rolling.index
 df_rolling['rolling_beta'] = df_rolling['^GSPC']
 df_rolling = df_rolling.drop(columns = ['const','^GSPC'])
 
+#calc beta adjusted return and then alpha
+#we will use alpha as our target variable for modeling
 daily_merged = pd.merge(df_rolling,daily_returns,how = 'inner',left_on='index',right_on = 'index')
 daily_merged['beta_return'] = daily_merged['^GSPC'] * daily_merged['rolling_beta']
 daily_merged['alpha'] = daily_merged['beta_return'] - daily_merged[stock_ticker]
